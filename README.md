@@ -95,7 +95,7 @@ This is a containerized Django backend designed for an ecommerce web application
 ```bash
 # Switch to development and pull latest changes
 git checkout development
-git pull origin main
+git pull origin development
 
 # Switch back to your feature branch and merge development
 git checkout feature/your-feature-name
