@@ -1,0 +1,7 @@
+asgiref==3.9.2
+Django==5.2.7
+sqlparse==0.5.3
+tzdata==2025.2
+gunicorn==21.2.0 # Production WSGI server
+psycopg2-binary==2.9.9 # PostgreSQL adapter for production database
+python-dotenv==1.0.0 # Load environment variables from .env 
