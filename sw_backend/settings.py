@@ -38,6 +38,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'rest_framework.authtoken',
+    'authentication',  
 ]
 
 MIDDLEWARE = [
@@ -69,6 +79,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sw_backend.wsgi.application'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModellBackend', # Default Django authentication
+    'allauth.account.auth_backends.AuthenticationBackend' # Allauth authentication
+]
+
+SITE_ID = 1
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -141,6 +157,7 @@ USE_I18N = True
 USE_TZ = True
 
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -150,3 +167,39 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Django Allauth Configuration
+SITE_ID = 1
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Social Authentication Configuration
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "none"  # Change to "mandatory" for production
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+
+# Social provider configruation
+SOCIALACCOUNT_PROVIDERS = {
+    'google':{
+        'APP': {
+            'client_id': os.environ.get('GOOGLE_OAUTH2_CLIENT_ID'),
+            'secret': os.environ.get('GOOGLE_OAUTH2_CLIENT_SECRET'),
+        },
+        'SCOPE': ['profile', 'email'], # Get profile and email from Google
+        'AUTH_PARAMS': {'access_type': 'online'}, # Control Google token refresh handling
+        'OAUTH_PKCE_ENABLED':True, # Enable Proof Key for Code Exchange 
+    },
+    'facebook': {
+        'APP':  {
+            'client_id': os.environ.get('FACEBOOK_APP_ID'),
+            'secret': os.environ.get('FACEBOOK_APP_SECRET'),
+        },
+        'SCOPE': ['email', 'public_profile'],
+        'METHOD': 'oauth2',
+        'VERIFIED_EMAIL': False,
+    }
+}

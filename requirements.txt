@@ -5,3 +5,9 @@ tzdata==2025.2
 gunicorn==21.2.0 # Production WSGI server
 psycopg2-binary==2.9.9 # PostgreSQL adapter for production database
 python-dotenv==1.0.0 # Load environment variables from .env 
+django-allauth==0.54.0
+dj-rest-auth[with_social]==4.0.1
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.2.2
+django-cors-headers==4.3.1
+python-dotenv==1.0.0
