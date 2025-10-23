@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken
 import re
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 # import phonenumbers
 # from phonenumbers import carrier, geocoder
 
@@ -21,6 +23,24 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
 
+@extend_schema(
+    summary="Health Check",
+    description="Check if the API is running and healthy",
+    responses={
+        200: {
+            'description': 'API is healthy and running',
+            'examples': {
+                'application/json': {
+                    'status': 'healthy',
+                    'message': 'API is running successfully',
+                    'timestamp': '2025-10-21T10:30:00Z',
+                    'version': '1.0.0'
+                }
+            }
+        }
+    },
+    tags=['System']
+)
 @api_view(['GET'])
 def health_check(request):
     """
@@ -34,6 +54,43 @@ def health_check(request):
     }
     return Response(data, status=status.HTTP_200_OK)
 
+@extend_schema(
+    summary="User Registration",
+    description="Register a new user with phone number, password, and full name",
+    request=UserRegistrationSerializer,
+    responses={
+        201: {
+            'description': 'User created successfully',
+            'examples': {
+                'application/json': {
+                    'success': True,
+                    'message': 'User registered successfully',
+                    'data': {
+                        'user_id': 123,
+                        'full_name': 'John Doe',
+                        'phone_number': '233501234567'
+                    },
+                    'tokens': {
+                        'access': 'eyJ0eXAi...',
+                        'refresh': 'eyJ0eXAi...'
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Validation error',
+            'examples': {
+                'application/json': {
+                    'success': False,
+                    'errors': {
+                        'phone_number': ['Phone number already exists']
+                    }
+                }
+            }
+        }
+    },
+    tags=['Authentication']
+)
 @api_view(['POST'])
 def user_register(request):
     """User registration endpoint using serializers"""
@@ -63,6 +120,53 @@ def user_register(request):
 
 
 
+@extend_schema(
+    summary="User Login",
+    description="Authenticate user with phone number and password",
+    request=UserLoginSerializer,
+    responses={
+        200: {
+            'description': 'Login successful',
+            'examples': {
+                'application/json': {
+                    'success': True,
+                    'message': 'Login successful',
+                    'data': {
+                        'user_id': 123,
+                        'full_name': 'John Doe',
+                        'phone_number': '233501234567'
+                    },
+                    'tokens': {
+                        'access': 'eyJ0eXAi...',
+                        'refresh': 'eyJ0eXAi...'
+                    }
+                }
+            }
+        },
+        400: {
+            'description': 'Validation error',
+            'examples': {
+                'application/json': {
+                    'success': False,
+                    'errors': {
+                        'phone_number': ['This field is required'],
+                        'password': ['This field is required']
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Authentication failed',
+            'examples': {
+                'application/json': {
+                    'success': False,
+                    'error': 'Invalid phone number or password'
+                }
+            }
+        }
+    },
+    tags=['Authentication']
+)
 @api_view(['POST'])
 def login_user(request):
     """
