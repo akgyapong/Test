@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     
     # Local apps
     'api',
@@ -192,6 +193,7 @@ REST_FRAMEWORK = {
      'DEFAULT_PERMISSION_CLASSES': [
          'rest_framework.permissions.AllowAny',
      ],
+     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
      'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
      'PAGE_SIZE': 20
 }
@@ -207,6 +209,9 @@ SIMPLE_JWT = {
 
 
 }
+
+REST_USE_JWT = True
+JWT_AUTH_COOKIE = 'my-app-auth'
 
 # =============================================================================
 # CORS CONFIGURATION
