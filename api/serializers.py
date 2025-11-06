@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
 from django.contrib.auth.hashers import make_password
-from .models import PasswordReset, UserProfile
+from .models import PasswordReset
 from django.utils import timezone
 import re
 from .utils import validate_password_strength
@@ -169,7 +170,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                     errors['phone_number'] = "This phone number is already registered. Please use a different number or try logging in."
                 
                 # Check if phone number already exists in profiles (new users)
-                if UserProfile.objects.filter(normalized_phone=normalized_phone).exists():
+                if User.objects.filter(normalized_phone=normalized_phone).exists():
                     errors['phone_number'] = "This phone number is already registered. Please use a different number or try logging in."
                     
             except serializers.ValidationError as e:
@@ -233,11 +234,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         )
         
         # Create user profile with phone number
-        UserProfile.objects.create(
-            user=user,
-            phone_number=phone_number,
-            normalized_phone=normalized_phone
-        )
         
         return user
 
@@ -390,9 +386,8 @@ class UserLoginSerializer(serializers.Serializer):
                     user = User.objects.get(username=normalized_phone)
                 except User.DoesNotExist:
                     # Try profile lookup
-                        profile = UserProfile.objects.get(normalized_phone=normalized_phone)
-                        user = profile.user
-             except (Exception, UserProfile.DoesNotExist):
+                        profile = User.objects.get(normalized_phone=normalized_phone)
+             except (Exception, User.DoesNotExist):
                  raise serializers.ValidationError({
                      'phone_number' : 'No account found with this phone number.'
                 })
@@ -472,9 +467,8 @@ class PasswordResetRequestSerializer(serializers.Serializer):
             except User.DoesNotExist:
                 try:
                     # Then try to find by profile phone number
-                    profile = UserProfile.objects.get(normalized_phone=normalized)
-                    user = profile.user
-                except UserProfile.DoesNotExist:
+                    profile = User.objects.get(normalized_phone=normalized)
+                except User.DoesNotExist:
                     raise serializers.ValidationError({
                         'reset_identifier': 'No account found with this phone number. Please check your phone number or register for a new account.'
                     })

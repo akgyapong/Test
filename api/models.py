@@ -1,13 +1,33 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from datetime import timedelta
 import random, string
 
+
+"""
+Custome User Model
+"""
+class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    normalized_phone = models.CharField(max_length=15, blank=True, null=True, db_index=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    class Meta:
+        db_table = 'custom_user'
+    
+    def __str__(self):
+        return self.email
+
+"""
 class UserProfile(models.Model):
-    """
-    Extended user profile to store additional user information
-    """
+    
+   # Extended user profile to store additional user information
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     normalized_phone = models.CharField(max_length=15, blank=True, null=True, db_index=True)
@@ -19,14 +39,14 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profile for {self.user.username}"
-
+"""
 class PasswordReset(models.Model):
     """
     Models to handel password reset
     """
 
     # Link to user.
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_resets')
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='password_resets')
     
     # Reset code (6 digit)
     reset_code = models.CharField(max_length=6)

@@ -199,3 +199,6 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+#Custom user model
+AUTH_USER_MODEL = 'api.CustomUser'
