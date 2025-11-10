@@ -184,9 +184,9 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# =============================================================================
+
 # REST FRAMEWORK CONFIGURATION
-# =============================================================================
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES' : (
@@ -202,9 +202,8 @@ REST_FRAMEWORK = {
      'PAGE_SIZE': 20
 }
 
-# =============================================================================
 # JWT CONFIGURATION
-# =============================================================================
+
 
 SIMPLE_JWT = {
     # Liftime
@@ -227,9 +226,7 @@ JWT_AUTH_COOKIE ='shopwice-auth'
 JWT_AUTH_REFRESH_COOKIE = 'shopwice-refresh'
 JWT_AUTH_HTTPONLY = False
 
-# =============================================================================
 # CORS CONFIGURATION
-# =============================================================================
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
