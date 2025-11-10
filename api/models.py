@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from datetime import timedelta
@@ -23,30 +23,14 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email
 
-"""
-class UserProfile(models.Model):
-    
-   # Extended user profile to store additional user information
-    
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
-    normalized_phone = models.CharField(max_length=15, blank=True, null=True, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        db_table = 'user_profiles'
-
-    def __str__(self):
-        return f"Profile for {self.user.username}"
-"""
 class PasswordReset(models.Model):
     """
     Models to handel password reset
     """
 
     # Link to user.
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='password_resets')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='password_resets')
     
     # Reset code (6 digit)
     reset_code = models.CharField(max_length=6)
