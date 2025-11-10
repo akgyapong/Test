@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     
     # Local apps
     'api',
+    'authentication',  
+    'products',
+    'orders',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -58,7 +61,7 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'dj_rest_auth.registration',
     'rest_framework.authtoken',
-    'authentication',  
+   
 ]
 
 MIDDLEWARE = [
@@ -188,12 +191,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES' : (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication', # For browsable API
 
     ),
      'DEFAULT_PERMISSION_CLASSES': [
          'rest_framework.permissions.AllowAny',
      ],
-     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+     'DEFAULT_SCHEMA_CLASS':'drf_spectacular.openapi.AutoSchema',
      'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
      'PAGE_SIZE': 20
 }
@@ -203,15 +207,25 @@ REST_FRAMEWORK = {
 # =============================================================================
 
 SIMPLE_JWT = {
+    # Liftime
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    
+    # Security
     'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLISH_AFTER_ROTATION': True,
+    
+    # Tracking 
+    'UPDATE_LAST_LOGIN': True 
+    
 
 
 }
 
 REST_USE_JWT = True
-JWT_AUTH_COOKIE = 'my-app-auth'
+JWT_AUTH_COOKIE ='shopwice-auth'
+JWT_AUTH_REFRESH_COOKIE = 'shopwice-refresh'
+JWT_AUTH_HTTPONLY = False
 
 # =============================================================================
 # CORS CONFIGURATION
@@ -246,7 +260,8 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         'SCOPE': ['profile', 'email'], # Get profile and email from Google
         'AUTH_PARAMS': {'access_type': 'online'}, # Control Google token refresh handling
-        'OAUTH_PKCE_ENABLED':True, # Enable Proof Key for Code Exchange 
+        'OAUTH_PKCE_ENABLED': True, # Enable Proof Key for Code Exchange
+        'FETCH_USERINFO': True, # Use access_token to fetch user info from Google
     },
     'facebook': {
         'APP':  {
