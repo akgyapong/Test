@@ -8,11 +8,20 @@ python-dotenv==1.0.0 # Load environment variables from .env
 
 # API Development
 djangorestframework==3.14.0 # REST API framework
-djangorestframework-simplejwt==5.3.0 # JWT authentication
+djangorestframework-simplejwt==5.3.0 # JWT authentication (using latest version)
 django-cors-headers==4.3.1 # CORS handling
+
+# Social Authentication
+django-allauth==0.54.0
+dj-rest-auth[with_social]==4.0.1
 
 # Phone number validation
 # phonenumbers==8.13.25 # Temporarily disabled
+<<<<<<< HEAD
 django-allauth==0.54.0
 dj-rest-auth[with_social]==4.0.1
+=======
+
+# API Documentation (added for Spectacular views)
+>>>>>>> 7accd2b48d6c38c0b69095eece7bb2f34a815ec9
 drf-spectacular==0.27.0

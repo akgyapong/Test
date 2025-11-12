@@ -94,13 +94,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sw_backend.wsgi.application'
 
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModellBackend', # Default Django authentication
-    'allauth.account.auth_backends.AuthenticationBackend' # Allauth authentication
-]
-
-SITE_ID = 1
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -227,9 +220,7 @@ JWT_AUTH_COOKIE ='shopwice-auth'
 JWT_AUTH_REFRESH_COOKIE = 'shopwice-refresh'
 JWT_AUTH_HTTPONLY = False
 
-# =============================================================================
 # CORS CONFIGURATION
-# =============================================================================
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -237,6 +228,10 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Custom user model
+AUTH_USER_MODEL = 'api.CustomUser'
+
 # Django Allauth Configuration
 SITE_ID = 1
 AUTHENTICATION_BACKENDS = [
@@ -251,7 +246,7 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 
-# Social provider configruation
+# Social provider configuration
 SOCIALACCOUNT_PROVIDERS = {
     'google':{
         'APP': {
