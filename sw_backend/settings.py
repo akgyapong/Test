@@ -94,6 +94,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sw_backend.wsgi.application'
 
+# Custom User Model
+AUTH_USER_MODEL = 'api.CustomUser'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend', # Default Django authentication
+    'allauth.account.auth_backends.AuthenticationBackend' # Allauth authentication
+]
+
+SITE_ID = 1
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -220,7 +230,9 @@ JWT_AUTH_COOKIE ='shopwice-auth'
 JWT_AUTH_REFRESH_COOKIE = 'shopwice-refresh'
 JWT_AUTH_HTTPONLY = False
 
+# =============================================================================
 # CORS CONFIGURATION
+# =============================================================================
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -228,10 +240,6 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
-# Custom user model
-AUTH_USER_MODEL = 'api.CustomUser'
-
 # Django Allauth Configuration
 SITE_ID = 1
 AUTHENTICATION_BACKENDS = [
@@ -246,7 +254,7 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 
-# Social provider configuration
+# Social provider configruation
 SOCIALACCOUNT_PROVIDERS = {
     'google':{
         'APP': {
@@ -260,7 +268,7 @@ SOCIALACCOUNT_PROVIDERS = {
     },
     'facebook': {
         'APP':  {
-            'client_id': os.environ.get('FACEBOOK_APP_ID'),
+            'client_id': os.environ.get('FACEBOOK_APP_ID'),                                         
             'secret': os.environ.get('FACEBOOK_APP_SECRET'),
         },
         'SCOPE': ['email', 'public_profile'],
