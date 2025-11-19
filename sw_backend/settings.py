@@ -45,9 +45,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     
     # Local apps
     'api',
+    'authentication',  
+    'products',
+    'orders',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -57,7 +61,7 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'dj_rest_auth.registration',
     'rest_framework.authtoken',
-    'authentication',  
+   
 ]
 
 MIDDLEWARE = [
@@ -90,8 +94,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sw_backend.wsgi.application'
 
+# Custom User Model
+AUTH_USER_MODEL = 'api.CustomUser'
+
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModellBackend', # Default Django authentication
+    'django.contrib.auth.backends.ModelBackend', # Default Django authentication
     'allauth.account.auth_backends.AuthenticationBackend' # Allauth authentication
 ]
 
@@ -180,33 +187,48 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# =============================================================================
+
 # REST FRAMEWORK CONFIGURATION
-# =============================================================================
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES' : (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication', # For browsable API
 
     ),
      'DEFAULT_PERMISSION_CLASSES': [
          'rest_framework.permissions.AllowAny',
      ],
+     'DEFAULT_SCHEMA_CLASS':'drf_spectacular.openapi.AutoSchema',
      'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
      'PAGE_SIZE': 20
 }
 
-# =============================================================================
 # JWT CONFIGURATION
-# =============================================================================
+
 
 SIMPLE_JWT = {
+    # Liftime
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    
+    # Security
     'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLISH_AFTER_ROTATION': True,
+    
+    # Tracking 
+    'UPDATE_LAST_LOGIN': True 
+    
 
 
 }
+
+# JWT Configuration for dj-rest-auth
+REST_USE_JWT = True
+JWT_AUTH_COOKIE ='shopwice-auth'
+JWT_AUTH_REFRESH_COOKIE = 'shopwice-refresh'
+JWT_AUTH_HTTPONLY = False
 
 # =============================================================================
 # CORS CONFIGURATION
@@ -241,11 +263,12 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         'SCOPE': ['profile', 'email'], # Get profile and email from Google
         'AUTH_PARAMS': {'access_type': 'online'}, # Control Google token refresh handling
-        'OAUTH_PKCE_ENABLED':True, # Enable Proof Key for Code Exchange 
+        'OAUTH_PKCE_ENABLED': True, # Enable Proof Key for Code Exchange
+        'FETCH_USERINFO': True, # Use access_token to fetch user info from Google
     },
     'facebook': {
         'APP':  {
-            'client_id': os.environ.get('FACEBOOK_APP_ID'),
+            'client_id': os.environ.get('FACEBOOK_APP_ID'),                                         
             'secret': os.environ.get('FACEBOOK_APP_SECRET'),
         },
         'SCOPE': ['email', 'public_profile'],

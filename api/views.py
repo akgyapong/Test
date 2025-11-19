@@ -7,9 +7,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView
+from .serializers import PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 import re
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
-from drf_spectacular.types import OpenApiTypes
+
+
 # import phonenumbers
 # from phonenumbers import carrier, geocoder
 
@@ -23,24 +25,6 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
 
-@extend_schema(
-    summary="Health Check",
-    description="Check if the API is running and healthy",
-    responses={
-        200: {
-            'description': 'API is healthy and running',
-            'examples': {
-                'application/json': {
-                    'status': 'healthy',
-                    'message': 'API is running successfully',
-                    'timestamp': '2025-10-21T10:30:00Z',
-                    'version': '1.0.0'
-                }
-            }
-        }
-    },
-    tags=['System']
-)
 @api_view(['GET'])
 def health_check(request):
     """
@@ -54,46 +38,9 @@ def health_check(request):
     }
     return Response(data, status=status.HTTP_200_OK)
 
-@extend_schema(
-    summary="User Registration",
-    description="Register a new user with phone number, password, and full name",
-    request=UserRegistrationSerializer,
-    responses={
-        201: {
-            'description': 'User created successfully',
-            'examples': {
-                'application/json': {
-                    'success': True,
-                    'message': 'User registered successfully',
-                    'data': {
-                        'user_id': 123,
-                        'full_name': 'John Doe',
-                        'phone_number': '233501234567'
-                    },
-                    'tokens': {
-                        'access': 'eyJ0eXAi...',
-                        'refresh': 'eyJ0eXAi...'
-                    }
-                }
-            }
-        },
-        400: {
-            'description': 'Validation error',
-            'examples': {
-                'application/json': {
-                    'success': False,
-                    'errors': {
-                        'phone_number': ['Phone number already exists']
-                    }
-                }
-            }
-        }
-    },
-    tags=['Authentication']
-)
 @api_view(['POST'])
 def user_register(request):
-    """User registration endpoint using serializers"""
+    """User registration endpoint using email, phone, and optional username"""
    
     serializer = UserRegistrationSerializer(data=request.data)
     
@@ -106,105 +53,83 @@ def user_register(request):
             'message': 'User registered successfully',
             'data':{
                 'user_id': user.id,
+                'username': user.username,
+                'email': user.email,
                 'full_name': f"{user.first_name} {user.last_name}".strip(),
-                'phone_number': user.username
             },
             'tokens': tokens
         }, status=status.HTTP_201_CREATED)
 # Return validation errors
     return Response({
         'success': False,
+        'message': 'Registration failed.',
         'errors': serializer.errors
-
     }, status=status.HTTP_400_BAD_REQUEST)
 
 
 
-@extend_schema(
-    summary="User Login",
-    description="Authenticate user with phone number and password",
-    request=UserLoginSerializer,
-    responses={
-        200: {
-            'description': 'Login successful',
-            'examples': {
-                'application/json': {
-                    'success': True,
-                    'message': 'Login successful',
-                    'data': {
-                        'user_id': 123,
-                        'full_name': 'John Doe',
-                        'phone_number': '233501234567'
-                    },
-                    'tokens': {
-                        'access': 'eyJ0eXAi...',
-                        'refresh': 'eyJ0eXAi...'
-                    }
-                }
-            }
-        },
-        400: {
-            'description': 'Validation error',
-            'examples': {
-                'application/json': {
-                    'success': False,
-                    'errors': {
-                        'phone_number': ['This field is required'],
-                        'password': ['This field is required']
-                    }
-                }
-            }
-        },
-        401: {
-            'description': 'Authentication failed',
-            'examples': {
-                'application/json': {
-                    'success': False,
-                    'error': 'Invalid phone number or password'
-                }
-            }
-        }
-    },
-    tags=['Authentication']
-)
 @api_view(['POST'])
 def login_user(request):
     """
-    User login endpoint - completely new implementation
+    User login endpoint - supports email or phone number login
     """
     serializer = UserLoginSerializer(data=request.data)
     if serializer.is_valid():
-        phone_number = serializer.validated_data['phone_number']
-        password = serializer.validated_data['password']
+        # Get the authenticated user from serializer validation
+        user = serializer.validated_data['user']
 
-        normalized_phone = serializer.normalize_phone_number(phone_number)
+        # Generate JWT tokens
+        tokens = get_tokens_for_user(user)
+
+        return Response({
+            'success': True,
+            'message': 'Login successful',
+            'data': {
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'full_name': f"{user.first_name} {user.last_name}".strip(),
+            },
+            'tokens': tokens
+        }, status=status.HTTP_200_OK)
         
-        user = authenticate(username=normalized_phone, password=password)
+    # Return validation errors
+    return Response({
+        'success': False,
+        'message': 'Login failed.',
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
 
-        if user is None:
-            user = authenticate(username=phone_number, password=password)
-
-        if user is not None:
-            #Generate JWT tokens
-            tokens= get_tokens_for_user(user)
-
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data, context={'ip_address': request.META.get('REMOTE_ADDR')})
+        if serializer.is_valid():
+            reset_obj = serializer.save()
+            # For dev: print code in console. It will be replaced with email/sms in production
+            identifier_type = "email" if "@" in reset_obj.phone_number else "phone"
+            print(f"Password reset code for {identifier_type} {reset_obj.phone_number}: {reset_obj.reset_code}")
             return Response({
                 'success': True,
-                'message': 'Login successful',
-                'data': {
-                    'user_id': user.id,
-                    'full_name': f"{user.first_name} {user.last_name}".strip(),
-                    'phone_number': user.username
-                },
-                'tokens': tokens
+                'message': f'Reset code sent to your {identifier_type}.',
+                'detail': 'Reset code sent.'
             }, status=status.HTTP_200_OK)
-        else:
+        return Response({
+            'success': False,
+            'message': 'Password reset request failed. ',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+class PasswordResetConfirmView(APIView):
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
             return Response({
-                'success': False,
-                'error': 'Invalid phone number or password'
-            }, status=status.HTTP_401_UNAUTHORIZED)
-# Return validation errors
-    return Response({
-    'success': False,
-    'errors': serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+                'success': True,
+                'detail': 'Password reset successful'
+            }, status=status.HTTP_200_OK)
+        return Response({
+            'success': False,
+            'message': 'Password reset failed.',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
