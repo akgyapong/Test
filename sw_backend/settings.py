@@ -74,6 +74,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -114,24 +115,35 @@ SITE_ID = 1
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Database configuration for Docker
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'shopwice_db'),
-        'USER': os.environ.get('POSTGRES_USER', 'shopwice_user'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'shopwice_password'),
-        'HOST' : os.environ.get('POSTGRES_HOST', 'db'),
-        'PORT' : os.environ.get('POSTGRES_PORT', '5432'),
+# Database configuration
+# On Heroku, use DATABASE_URL; locally, use Docker/SQLite
+if 'DATABASE_URL' in os.environ:
+    # Heroku Postgres
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
-
-# Fallback to SQLite for local development without Docker
-if os.environ.get('USE_SQLITE'):
+elif os.environ.get('USE_SQLITE'):
+    # SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    # Docker Postgres (default for local development)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', 'shopwice_db'),
+            'USER': os.environ.get('POSTGRES_USER', 'shopwice_user'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'shopwice_password'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'db'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
         }
     }
 
@@ -145,8 +157,11 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 
 # Static and Media Files
-STATIC_URL = os.environ.get('STATIC_URL', '/static/')
-MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
    
 
@@ -241,9 +256,13 @@ JWT_AUTH_HTTPONLY = False
 # CORS CONFIGURATION
 # =============================================================================
 
+# Get frontend URL from environment variable for Heroku
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:3000",
+    FRONTEND_URL,  # Will be your Heroku frontend URL
 ]
 
 CORS_ALLOW_CREDENTIALS = True
