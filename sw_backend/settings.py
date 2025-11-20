@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+import dj_database_url
 
 # Load environment variables from .env files
 load_dotenv()
@@ -27,7 +28,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Secret configuration
 SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = bool(os.environ.get("DEBUG", default=0))
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
+
+# ALLOWED_HOSTS configuration - handles both local and Heroku
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+
+# Add Heroku hostname if on Heroku (DATABASE_URL is only present on Heroku)
+if 'DATABASE_URL' in os.environ:
+    ALLOWED_HOSTS.append('.herokuapp.com')
 
 
 # Application definition
