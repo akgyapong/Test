@@ -14,6 +14,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
 import dj_database_url
+# Cloudinary Imports
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Load environment variables from .env files
 load_dotenv()
@@ -49,10 +53,13 @@ INSTALLED_APPS = [
 
     
     # Third-party apps
+    'cloudinary_storage',
+    'cloudinary',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
+    
     
     # Local apps
     'api',
@@ -163,6 +170,18 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# =============================================================================
+# CLOUDINARY CONFIGURATION (for image uploads)
+# =============================================================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dtdyno7mq'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '449388164882648'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# Use Cloudinary for media files (product images)
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
    
 
 
