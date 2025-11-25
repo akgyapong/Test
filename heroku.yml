@@ -1,0 +1,15 @@
+setup:
+  addons:
+  - plan: heroku-postgresql
+
+build:
+  docker:
+    web: Dockerfile  # Service name: "web", built from Dockerfile
+
+release:
+  command:
+   - python manage.py migrate --noinput
+  image: web  # ✅ Reference the service name "web"
+
+run:
+  web: gunicorn sw_backend.wsgi:application --bind 0.0.0.0:$PORT

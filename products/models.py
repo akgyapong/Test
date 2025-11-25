@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary_storage.storage import MediaCloudinaryStorage
 
 
 class Category(models.Model):
@@ -66,7 +67,7 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=True)
     availability_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="out_of_stock")
-    main_image = models.ImageField(upload_to='products/', blank=True, null=True) # Save images at products/
+    main_image = models.ImageField(upload_to='products/', storage=MediaCloudinaryStorage(), blank=True, null=True) # Save images at products/
     meta_title = models.CharField(max_length=50)
     meta_description = models.CharField(max_length=150, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

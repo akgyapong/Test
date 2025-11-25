@@ -13,6 +13,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+import dj_database_url
+# Cloudinary Imports
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Load environment variables from .env files
 load_dotenv()
@@ -27,7 +32,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Secret configuration
 SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = bool(os.environ.get("DEBUG", default=0))
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
+
+# ALLOWED_HOSTS configuration - handles both local and Heroku
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+
+# Add Heroku hostname if on Heroku (DATABASE_URL is only present on Heroku)
+if 'DATABASE_URL' in os.environ:
+    ALLOWED_HOSTS.append('.herokuapp.com')
 
 
 # Application definition
@@ -42,10 +53,13 @@ INSTALLED_APPS = [
 
     
     # Third-party apps
+    'cloudinary_storage',
+    'cloudinary',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
+    
     
     # Local apps
     'api',
@@ -67,6 +81,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -107,24 +122,35 @@ SITE_ID = 1
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Database configuration for Docker
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'shopwice_db'),
-        'USER': os.environ.get('POSTGRES_USER', 'shopwice_user'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'shopwice_password'),
-        'HOST' : os.environ.get('POSTGRES_HOST', 'db'),
-        'PORT' : os.environ.get('POSTGRES_PORT', '5432'),
+# Database configuration
+# On Heroku, use DATABASE_URL; locally, use Docker/SQLite
+if 'DATABASE_URL' in os.environ:
+    # Heroku Postgres
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
-
-# Fallback to SQLite for local development without Docker
-if os.environ.get('USE_SQLITE'):
+elif os.environ.get('USE_SQLITE'):
+    # SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    # Docker Postgres (default for local development)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', 'shopwice_db'),
+            'USER': os.environ.get('POSTGRES_USER', 'shopwice_user'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'shopwice_password'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'db'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
         }
     }
 
@@ -138,9 +164,24 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 
 # Static and Media Files
-STATIC_URL = os.environ.get('STATIC_URL', '/static/')
-MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# =============================================================================
+# CLOUDINARY CONFIGURATION (for image uploads)
+# =============================================================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dtdyno7mq'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '449388164882648'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# Use Cloudinary for media files (product images)
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
    
 
 
@@ -234,9 +275,13 @@ JWT_AUTH_HTTPONLY = False
 # CORS CONFIGURATION
 # =============================================================================
 
+# Get frontend URL from environment variable for Heroku
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:5173",
     "http://127.0.0.1:3000",
+    FRONTEND_URL,  # Will be your Heroku frontend URL
 ]
 
 CORS_ALLOW_CREDENTIALS = True
