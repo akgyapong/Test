@@ -1,139 +1,149 @@
-from django.shortcuts import render
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q, Count, Prefetch, F
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from django.db.models import Q, F
 
 from .models import Category, Product
 from .serializers import (
-    CategoryListSerializer, 
-    CategoryDetailSerializer, 
+    CategoryListSerializer,
+    CategoryDetailSerializer,
     CategoryCreateUpdateSerializer,
     ProductListSerializer,
-    ProductDetailSerializer, 
+    ProductDetailSerializer,
     ProductCreateUpdateSerializer
 )
 
 
 @extend_schema_view(
     list=extend_schema(
-        summary="List Categories",
-        description="Get all active categories with basic information and counts",
-        responses={200: CategoryListSerializer(many=True)},
-        tags=['Categories']
+        summary="List all categories",
+        description="Retrieve a list of all active categories with pagination support",
+        tags=["Categories"]
     ),
     retrieve=extend_schema(
-        summary="Get Category Details", 
-        description="Get detailed category information including parent, children, and breadcrumbs",
-        responses={200: CategoryDetailSerializer},
-        tags=['Categories']
+        summary="Get category details",
+        description="Retrieve detailed information about a specific category including parent, children, and breadcrumbs",
+        tags=["Categories"]
     ),
     create=extend_schema(
-        summary="Create Category",
-        description="Create a new category (requires authentication)",
-        request=CategoryCreateUpdateSerializer,
-        responses={201: CategoryDetailSerializer},
-        tags=['Categories']
+        summary="Create new category",
+        description="Create a new category (Admin only)",
+        tags=["Categories"]
     ),
     update=extend_schema(
-        summary="Update Category",
-        description="Update an existing category (requires authentication)", 
-        request=CategoryCreateUpdateSerializer,
-        responses={200: CategoryDetailSerializer},
-        tags=['Categories']
+        summary="Update category",
+        description="Update an existing category (Admin only)",
+        tags=["Categories"]
+    ),
+    partial_update=extend_schema(
+        summary="Partially update category",
+        description="Partially update an existing category (Admin only)",
+        tags=["Categories"]
     ),
     destroy=extend_schema(
-        summary="Delete Category",
-        description="Delete a category and all its subcategories (requires authentication)",
-        responses={204: None},
-        tags=['Categories']
+        summary="Delete category",
+        description="Delete a category (Admin only)",
+        tags=["Categories"]
     )
 )
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Category CRUD operations
+    
+    Provides:
+    - List all categories (GET /api/v1/categories/)
+    - Retrieve single category (GET /api/v1/categories/{id}/)
+    - Create category (POST /api/v1/categories/) - Admin only
+    - Update category (PUT /api/v1/categories/{id}/) - Admin only
+    - Partial update (PATCH /api/v1/categories/{id}/) - Admin only
+    - Delete category (DELETE /api/v1/categories/{id}/) - Admin only
+    
+    Features:
+    - Filtering by parent, is_active
+    - Search by name, description
+    - Ordering by name, created_at
+    - Custom action: Get products in category
+    - Custom action: Get root categories
     """
     
-    queryset = Category.objects.filter(is_active=True)
+    queryset = Category.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['parent', 'is_active']
     search_fields = ['name', 'description']
-    ordering_fields = ['name', 'created_at', 'updated_at']
+    ordering_fields = ['name', 'created_at']
     ordering = ['name']
     
     def get_serializer_class(self):
+        """
+        Return appropriate serializer based on action
+        """
         if self.action == 'list':
             return CategoryListSerializer
-        elif self.action in ['create', 'update', 'partial_update']:
-            return CategoryCreateUpdateSerializer
-        else:
+        elif self.action == 'retrieve':
             return CategoryDetailSerializer
+        else:
+            return CategoryCreateUpdateSerializer
     
     def get_queryset(self):
-        queryset = Category.objects.filter(is_active=True)
+        """
+        Optimize queryset with select_related and prefetch_related
+        """
+        queryset = Category.objects.all()
         
         if self.action == 'list':
-            queryset = queryset.prefetch_related('children', 'products')
+            queryset = queryset.select_related('parent').prefetch_related('children', 'products')
         elif self.action == 'retrieve':
-            queryset = queryset.select_related('parent').prefetch_related('children__children')
-            
+            queryset = queryset.select_related('parent').prefetch_related(
+                'children',
+                Prefetch('products', queryset=Product.objects.filter(is_active=True))
+            )
+        
         return queryset
     
-    def perform_create(self, serializer):
-        serializer.save()
-    
-    def perform_destroy(self, instance):
-        instance.is_active = False
-        instance.save()
-        
-        def mark_children_inactive(category):
-            for child in category.children.all():
-                child.is_active = False
-                child.save()
-                mark_children_inactive(child)
-        
-        mark_children_inactive(instance)
-    
+    @extend_schema(
+        summary="Get products in category",
+        description="Retrieve all products that belong to this category",
+        responses={200: ProductListSerializer(many=True)},
+        tags=["Categories"]
+    )
     @action(detail=True, methods=['get'])
     def products(self, request, pk=None):
+        """
+        Get all products in this category
+        
+        URL: GET /api/v1/categories/{id}/products/
+        """
         category = self.get_object()
-        include_subcategories = request.query_params.get('include_subcategories', 'true').lower() == 'true'
-        
-        if include_subcategories:
-            category_ids = [category.id] + self._get_descendant_ids(category)
-            products = Product.objects.filter(
-                category_id__in=category_ids,
-                is_active=True
-            ).select_related('category')
-        else:
-            products = category.products.filter(is_active=True).select_related('category')
-        
-        page = self.paginate_queryset(products)
-        if page is not None:
-            serializer = ProductListSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        products = Product.objects.filter(
+            category=category,
+            is_active=True
+        ).select_related('category')
         
         serializer = ProductListSerializer(products, many=True)
         return Response(serializer.data)
     
-    def _get_descendant_ids(self, category):
-        descendant_ids = []
-        for child in category.children.filter(is_active=True):
-            descendant_ids.append(child.id)
-            descendant_ids.extend(self._get_descendant_ids(child))
-        return descendant_ids
-    
+    @extend_schema(
+        summary="Get root categories",
+        description="Retrieve all top-level categories (categories without parent)",
+        responses={200: CategoryListSerializer(many=True)},
+        tags=["Categories"]
+    )
     @action(detail=False, methods=['get'])
     def roots(self, request):
+        """
+        Get all root categories (categories without parent)
+        
+        URL: GET /api/v1/categories/roots/
+        """
         root_categories = Category.objects.filter(
-            parent=None, 
+            parent__isnull=True,
             is_active=True
-        ).prefetch_related('children')
+        ).prefetch_related('children', 'products')
         
         serializer = CategoryListSerializer(root_categories, many=True)
         return Response(serializer.data)
@@ -141,96 +151,140 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        summary="List Products",
-        description="Get all active products with filtering, search, and pagination",
-        responses={200: ProductListSerializer(many=True)},
-        tags=['Products']
+        summary="List all products",
+        description="Retrieve a list of all active products with filtering, search, and pagination",
+        tags=["Products"],
+        parameters=[
+            OpenApiParameter(
+                name='category',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Filter by category ID'
+            ),
+            OpenApiParameter(
+                name='brand',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by brand name'
+            ),
+            OpenApiParameter(
+                name='is_featured',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description='Filter featured products'
+            ),
+            OpenApiParameter(
+                name='min_price',
+                type=OpenApiTypes.FLOAT,
+                location=OpenApiParameter.QUERY,
+                description='Minimum price filter'
+            ),
+            OpenApiParameter(
+                name='max_price',
+                type=OpenApiTypes.FLOAT,
+                location=OpenApiParameter.QUERY,
+                description='Maximum price filter'
+            ),
+        ]
     ),
     retrieve=extend_schema(
-        summary="Get Product Details",
-        description="Get detailed product information including category, stock status, and related products",
-        responses={200: ProductDetailSerializer},
-        tags=['Products']
+        summary="Get product details",
+        description="Retrieve detailed information about a specific product",
+        tags=["Products"]
     ),
     create=extend_schema(
-        summary="Create Product",
-        description="Create a new product (requires authentication)",
-        request=ProductCreateUpdateSerializer,
-        responses={201: ProductDetailSerializer},
-        tags=['Products']
+        summary="Create new product",
+        description="Create a new product (Admin only)",
+        tags=["Products"]
     ),
     update=extend_schema(
-        summary="Update Product",
-        description="Update an existing product (requires authentication)",
-        request=ProductCreateUpdateSerializer,
-        responses={200: ProductDetailSerializer},
-        tags=['Products']
+        summary="Update product",
+        description="Update an existing product (Admin only)",
+        tags=["Products"]
+    ),
+    partial_update=extend_schema(
+        summary="Partially update product",
+        description="Partially update an existing product (Admin only)",
+        tags=["Products"]
     ),
     destroy=extend_schema(
-        summary="Delete Product",
-        description="Delete a product (requires authentication)",
-        responses={204: None},
-        tags=['Products']
+        summary="Delete product",
+        description="Delete a product (Admin only)",
+        tags=["Products"]
     )
 )
 class ProductViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for Product CRUD operations with advanced filtering
+    ViewSet for Product CRUD operations
+    
+    Provides:
+    - List all products (GET /api/v1/products/)
+    - Retrieve single product (GET /api/v1/products/{id}/)
+    - Create product (POST /api/v1/products/) - Admin only
+    - Update product (PUT /api/v1/products/{id}/) - Admin only
+    - Partial update (PATCH /api/v1/products/{id}/) - Admin only
+    - Delete product (DELETE /api/v1/products/{id}/) - Admin only
+    
+    Features:
+    - Advanced filtering (category, brand, price range, stock status, etc.)
+    - Search by name, description, sku, brand
+    - Ordering by price, name, created_at
+    - Custom action: Search products
+    - Custom action: Get featured products
+    - Custom action: Get product recommendations
     """
     
-    queryset = Product.objects.filter(is_active=True)
+    queryset = Product.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'brand', 'is_featured', 'availability_status']
-    search_fields = ['name', 'description', 'short_description', 'brand', 'sku']
-    ordering_fields = ['name', 'price', 'created_at', 'updated_at', 'stock_quantity']
+    search_fields = ['name', 'description', 'sku', 'brand']
+    ordering_fields = ['price', 'name', 'created_at', 'stock_quantity']
     ordering = ['-created_at']
     
     def get_serializer_class(self):
+        """
+        Return appropriate serializer based on action
+        """
         if self.action == 'list':
             return ProductListSerializer
-        elif self.action in ['create', 'update', 'partial_update']:
-            return ProductCreateUpdateSerializer
-        else:
+        elif self.action == 'retrieve':
             return ProductDetailSerializer
+        else:
+            return ProductCreateUpdateSerializer
     
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True)
+        """
+        Optimize queryset with select_related and apply filters
+        """
+        queryset = Product.objects.select_related('category').filter(is_active=True)
         
-        if self.action == 'list':
-            queryset = queryset.select_related('category')
-        elif self.action == 'retrieve':
-            queryset = queryset.select_related('category__parent').prefetch_related('category__children')
-        
-        queryset = self._apply_custom_filters(queryset)
-        return queryset
-    
-    def _apply_custom_filters(self, queryset):
-        request = self.request
-        
-        min_price = request.query_params.get('min_price')
-        max_price = request.query_params.get('max_price')
+        # Price range filtering
+        min_price = self.request.query_params.get('min_price')
+        max_price = self.request.query_params.get('max_price')
         
         if min_price:
             try:
                 queryset = queryset.filter(price__gte=float(min_price))
             except ValueError:
                 pass
-                
+        
         if max_price:
             try:
                 queryset = queryset.filter(price__lte=float(max_price))
             except ValueError:
                 pass
         
-        in_stock_only = request.query_params.get('in_stock_only')
+        # In stock only filter
+        in_stock_only = self.request.query_params.get('in_stock_only')
         if in_stock_only and in_stock_only.lower() == 'true':
             queryset = queryset.filter(
-                Q(track_inventory=False) | 
-                Q(track_inventory=True, stock_quantity__gt=0)
+                Q(track_inventory=False) |  # Unlimited stock
+                Q(track_inventory=True, stock_quantity__gt=0)  # Has stock
             )
         
-        on_sale = request.query_params.get('on_sale')
+        # On sale filter (products with discount)
+        on_sale = self.request.query_params.get('on_sale')
         if on_sale and on_sale.lower() == 'true':
             queryset = queryset.filter(
                 discount_price__isnull=False,
@@ -239,61 +293,106 @@ class ProductViewSet(viewsets.ModelViewSet):
         
         return queryset
     
-    def perform_create(self, serializer):
-        serializer.save()
-    
-    def perform_destroy(self, instance):
-        instance.is_active = False
-        instance.save()
-    
+    @extend_schema(
+        summary="Search products",
+        description="Advanced product search with query string",
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Search query',
+                required=True
+            )
+        ],
+        responses={200: ProductListSerializer(many=True)},
+        tags=["Products"]
+    )
     @action(detail=False, methods=['get'])
     def search(self, request):
-        query = request.query_params.get('q', '').strip()
+        """
+        Advanced product search
+        
+        URL: GET /api/v1/products/search/?q=laptop
+        """
+        query = request.query_params.get('q', '')
         
         if not query:
             return Response(
-                {'error': 'Search query parameter "q" is required.'},
+                {'error': 'Search query parameter "q" is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        search_query = Q(name__icontains=query) | \
-                      Q(description__icontains=query) | \
-                      Q(brand__icontains=query) | \
-                      Q(sku__icontains=query)
-        
         products = Product.objects.filter(
-            search_query,
+            Q(name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(brand__icontains=query) |
+            Q(sku__icontains=query),
             is_active=True
         ).select_related('category')
-        
-        products = self._apply_custom_filters(products)
-        
-        page = self.paginate_queryset(products)
-        if page is not None:
-            serializer = ProductListSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
         
         serializer = ProductListSerializer(products, many=True)
         return Response(serializer.data)
     
+    @extend_schema(
+        summary="Get featured products",
+        description="Retrieve all featured products",
+        responses={200: ProductListSerializer(many=True)},
+        tags=["Products"]
+    )
     @action(detail=False, methods=['get'])
     def featured(self, request):
+        """
+        Get featured products
+        
+        URL: GET /api/v1/products/featured/
+        """
         featured_products = Product.objects.filter(
             is_featured=True,
             is_active=True
-        ).select_related('category')[:20]
+        ).select_related('category')[:10]  # Limit to 10 featured products
         
         serializer = ProductListSerializer(featured_products, many=True)
         return Response(serializer.data)
     
+    @extend_schema(
+        summary="Get product recommendations",
+        description="Get recommended products based on a specific product",
+        responses={200: ProductListSerializer(many=True)},
+        tags=["Products"]
+    )
     @action(detail=True, methods=['get'])
     def recommendations(self, request, pk=None):
+        """
+        Get recommended products based on current product
+        
+        URL: GET /api/v1/products/{id}/recommendations/
+        
+        Algorithm:
+        1. Same category products
+        2. Same brand products
+        3. Similar price range products
+        """
         product = self.get_object()
         
-        recommendations = Product.objects.filter(
-            Q(category=product.category) | Q(brand=product.brand),
+        # Get products from same category
+        same_category = Product.objects.filter(
+            category=product.category,
             is_active=True
-        ).exclude(id=product.id).select_related('category')[:8]
+        ).exclude(id=product.id)[:4]
+        
+        # If not enough, add same brand
+        if same_category.count() < 4:
+            same_brand = Product.objects.filter(
+                brand=product.brand,
+                is_active=True
+            ).exclude(
+                id__in=[p.id for p in same_category] + [product.id]
+            )[:4 - same_category.count()]
+            
+            recommendations = list(same_category) + list(same_brand)
+        else:
+            recommendations = same_category
         
         serializer = ProductListSerializer(recommendations, many=True)
         return Response(serializer.data)

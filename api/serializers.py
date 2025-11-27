@@ -615,6 +615,47 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return user
 
 
+# Additional serializers for API documentation
+
+class HealthCheckSerializer(serializers.Serializer):
+    """Serializer for health check response"""
+    status = serializers.CharField(help_text="API health status")
+    message = serializers.CharField(help_text="Health check message")
+    timestamp = serializers.DateTimeField(help_text="Server timestamp")
+    version = serializers.CharField(help_text="API version")
+
+class UserResponseSerializer(serializers.Serializer):
+    """Serializer for user data in API responses"""
+    user_id = serializers.IntegerField(help_text="User ID")
+    username = serializers.CharField(help_text="Username")
+    email = serializers.EmailField(help_text="Email address")
+    full_name = serializers.CharField(help_text="User's full name")
+
+class TokenResponseSerializer(serializers.Serializer):
+    """Serializer for JWT token response"""
+    refresh = serializers.CharField(help_text="JWT refresh token")
+    access = serializers.CharField(help_text="JWT access token")
+
+class AuthSuccessResponseSerializer(serializers.Serializer):
+    """Serializer for successful authentication response"""
+    success = serializers.BooleanField(help_text="Success status")
+    message = serializers.CharField(help_text="Response message")
+    data = UserResponseSerializer(help_text="User data")
+    tokens = TokenResponseSerializer(help_text="JWT tokens")
+
+class AuthErrorResponseSerializer(serializers.Serializer):
+    """Serializer for authentication error response"""
+    success = serializers.BooleanField(help_text="Success status")
+    message = serializers.CharField(help_text="Error message")
+    errors = serializers.DictField(help_text="Validation errors")
+
+class PasswordResetSuccessResponseSerializer(serializers.Serializer):
+    """Serializer for successful password reset response"""
+    success = serializers.BooleanField(help_text="Success status")
+    message = serializers.CharField(help_text="Response message")
+    detail = serializers.CharField(help_text="Additional details")
+
+
 
 
 
