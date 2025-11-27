@@ -1,0 +1,1327 @@
+openapi: 3.0.3
+info:
+  title: ''
+  version: 0.0.0
+paths:
+  /api/schema/:
+    get:
+      operationId: schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - ckb
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - ms
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - ug
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - schema
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/auth/:
+    get:
+      operationId: v1_auth_retrieve
+      description: API endpoint that provides information about available authentication
+        methods.
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/facebook/:
+    post:
+      operationId: v1_auth_facebook_create
+      description: |-
+        class used for social authentications
+        example usage for facebook with access_token
+        -------------
+        from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+
+        class FacebookLogin(SocialLoginView):
+            adapter_class = FacebookOAuth2Adapter
+        -------------
+
+        example usage for facebook with code
+
+        -------------
+        from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+        from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+
+        class FacebookLogin(SocialLoginView):
+            adapter_class = FacebookOAuth2Adapter
+            client_class = OAuth2Client
+            callback_url = 'localhost:8000'
+        -------------
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialLogin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SocialLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SocialLogin'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialLogin'
+          description: ''
+  /api/v1/auth/google/:
+    post:
+      operationId: v1_auth_google_create
+      description: |-
+        class used for social authentications
+        example usage for facebook with access_token
+        -------------
+        from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+
+        class FacebookLogin(SocialLoginView):
+            adapter_class = FacebookOAuth2Adapter
+        -------------
+
+        example usage for facebook with code
+
+        -------------
+        from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+        from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+
+        class FacebookLogin(SocialLoginView):
+            adapter_class = FacebookOAuth2Adapter
+            client_class = OAuth2Client
+            callback_url = 'localhost:8000'
+        -------------
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialLogin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SocialLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SocialLogin'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialLogin'
+          description: ''
+  /api/v1/auth/login/:
+    post:
+      operationId: v1_auth_login_create
+      description: User login endpoint - supports email or phone number login
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/auth/register/:
+    post:
+      operationId: v1_auth_register_create
+      description: User registration endpoint using email, phone, and optional username
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/categories/:
+    get:
+      operationId: v1_categories_list
+      description: Get all active categories with basic information and counts
+      summary: List Categories
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: parent
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Categories
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryListList'
+          description: ''
+    post:
+      operationId: v1_categories_create
+      description: Create a new category (requires authentication)
+      summary: Create Category
+      tags:
+      - Categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDetail'
+          description: ''
+  /api/v1/categories/{id}/:
+    get:
+      operationId: v1_categories_retrieve
+      description: Get detailed category information including parent, children, and
+        breadcrumbs
+      summary: Get Category Details
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Category.
+        required: true
+      tags:
+      - Categories
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDetail'
+          description: ''
+    put:
+      operationId: v1_categories_update
+      description: Update an existing category (requires authentication)
+      summary: Update Category
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Category.
+        required: true
+      tags:
+      - Categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDetail'
+          description: ''
+    patch:
+      operationId: v1_categories_partial_update
+      description: ViewSet for Category CRUD operations
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Category.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryCreateUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryCreateUpdate'
+          description: ''
+    delete:
+      operationId: v1_categories_destroy
+      description: Delete a category and all its subcategories (requires authentication)
+      summary: Delete Category
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Category.
+        required: true
+      tags:
+      - Categories
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/categories/{id}/products/:
+    get:
+      operationId: v1_categories_products_retrieve
+      description: ViewSet for Category CRUD operations
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Category.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDetail'
+          description: ''
+  /api/v1/categories/roots/:
+    get:
+      operationId: v1_categories_roots_retrieve
+      description: ViewSet for Category CRUD operations
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDetail'
+          description: ''
+  /api/v1/health/:
+    get:
+      operationId: v1_health_retrieve
+      description: Health check endpoint to verify API is working
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/password-reset/confirm/:
+    post:
+      operationId: v1_password_reset_confirm_create
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/password-reset/request/:
+    post:
+      operationId: v1_password_reset_request_create
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/products/:
+    get:
+      operationId: v1_products_list
+      description: Get all active products with filtering, search, and pagination
+      summary: List Products
+      parameters:
+      - in: query
+        name: availability_status
+        schema:
+          type: string
+          enum:
+          - discontinued
+          - in_stock
+          - out_of_stock
+          - pre_order
+        description: |-
+          * `in_stock` - In Stock
+          * `out_of_stock` - Out of Stock
+          * `pre_order` - Pre Order
+          * `discontinued` - Discontinued
+      - in: query
+        name: brand
+        schema:
+          type: string
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: query
+        name: is_featured
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Products
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductListList'
+          description: ''
+    post:
+      operationId: v1_products_create
+      description: Create a new product (requires authentication)
+      summary: Create Product
+      tags:
+      - Products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductCreateUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/v1/products/{id}/:
+    get:
+      operationId: v1_products_retrieve
+      description: Get detailed product information including category, stock status,
+        and related products
+      summary: Get Product Details
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Product.
+        required: true
+      tags:
+      - Products
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+    put:
+      operationId: v1_products_update
+      description: Update an existing product (requires authentication)
+      summary: Update Product
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Product.
+        required: true
+      tags:
+      - Products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductCreateUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+    patch:
+      operationId: v1_products_partial_update
+      description: ViewSet for Product CRUD operations with advanced filtering
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Product.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductCreateUpdate'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductCreateUpdate'
+          description: ''
+    delete:
+      operationId: v1_products_destroy
+      description: Delete a product (requires authentication)
+      summary: Delete Product
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Product.
+        required: true
+      tags:
+      - Products
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/products/{id}/recommendations/:
+    get:
+      operationId: v1_products_recommendations_retrieve
+      description: ViewSet for Product CRUD operations with advanced filtering
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Product.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/v1/products/featured/:
+    get:
+      operationId: v1_products_featured_retrieve
+      description: ViewSet for Product CRUD operations with advanced filtering
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/v1/products/search/:
+    get:
+      operationId: v1_products_search_retrieve
+      description: ViewSet for Product CRUD operations with advanced filtering
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+components:
+  schemas:
+    AvailabilityStatusEnum:
+      enum:
+      - in_stock
+      - out_of_stock
+      - pre_order
+      - discontinued
+      type: string
+      description: |-
+        * `in_stock` - In Stock
+        * `out_of_stock` - Out of Stock
+        * `pre_order` - Pre Order
+        * `discontinued` - Discontinued
+    CategoryCreateUpdate:
+      type: object
+      description: |-
+        Serializer for Category create/update operations
+
+        Used for: POST /api/v1/categories/, PUT /api/v1/categories/{id}/
+        Purpose: Handle category creation and updates with validation
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          title: URL
+          description: 'URL-friendly version: mobile-phones-tablets'
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - name
+      - slug
+    CategoryDetail:
+      type: object
+      description: |-
+        Serializer for Category detail view - includes nested relationships
+
+        Used for: GET /api/v1/categories/{id}/
+        Purpose: Complete category information with parent/children details
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          title: URL
+          description: 'URL-friendly version: mobile-phones-tablets'
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+        parent:
+          allOf:
+          - $ref: '#/components/schemas/CategoryList'
+          readOnly: true
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryList'
+          readOnly: true
+        is_active:
+          type: boolean
+        product_count:
+          type: string
+          readOnly: true
+        breadcrumbs:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - breadcrumbs
+      - children
+      - created_at
+      - id
+      - name
+      - parent
+      - product_count
+      - slug
+      - updated_at
+    CategoryList:
+      type: object
+      description: |-
+        Serializer for Category list view - lightweight for performance
+
+        Used for: GET /api/v1/categories/
+        Purpose: Fast loading of category lists with essential info only
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          title: URL
+          description: 'URL-friendly version: mobile-phones-tablets'
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        children_count:
+          type: string
+          readOnly: true
+        product_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - children_count
+      - created_at
+      - id
+      - name
+      - product_count
+      - slug
+    PaginatedCategoryListList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryList'
+    PaginatedProductListList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductList'
+    PatchedCategoryCreateUpdate:
+      type: object
+      description: |-
+        Serializer for Category create/update operations
+
+        Used for: POST /api/v1/categories/, PUT /api/v1/categories/{id}/
+        Purpose: Handle category creation and updates with validation
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          title: URL
+          description: 'URL-friendly version: mobile-phones-tablets'
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+    PatchedProductCreateUpdate:
+      type: object
+      description: |-
+        Serializer for Product create/update operations
+
+        Used for: POST /api/v1/products/, PUT /api/v1/products/{id}/
+        Purpose: Handle product creation and updates with comprehensive validation
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          title: URL
+          description: 'URL-friendly version: mobile-phones-tablets'
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        children_count:
+          type: string
+          readOnly: true
+        product_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    ProductCreateUpdate:
+      type: object
+      description: |-
+        Serializer for Product create/update operations
+
+        Used for: POST /api/v1/products/, PUT /api/v1/products/{id}/
+        Purpose: Handle product creation and updates with comprehensive validation
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          title: URL
+          description: 'URL-friendly version: mobile-phones-tablets'
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          nullable: true
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        children_count:
+          type: string
+          readOnly: true
+        product_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - children_count
+      - created_at
+      - id
+      - name
+      - product_count
+      - slug
+    ProductDetail:
+      type: object
+      description: |-
+        Serializer for Product detail view - complete information
+
+        Used for: GET /api/v1/products/{id}/
+        Purpose: Full product details with all relationships
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Product Name
+          description: e.g., iPhone 15 Pro Max
+          maxLength: 50
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          description: Full Product Description
+        short_description:
+          type: string
+          description: Brief summary for listings
+          maxLength: 150
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        discount_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+          maxLength: 20
+        sku:
+          type: string
+          maxLength: 50
+        brand:
+          type: string
+          maxLength: 50
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryList'
+          readOnly: true
+        category_breadcrumbs:
+          type: string
+          readOnly: true
+        stock_quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: How many in stock
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: When to show 'Low Stock' warning
+        track_inventory:
+          type: boolean
+        is_active:
+          type: boolean
+        is_featured:
+          type: boolean
+        availability_status:
+          $ref: '#/components/schemas/AvailabilityStatusEnum'
+        main_image:
+          type: string
+          format: uri
+          nullable: true
+        meta_title:
+          type: string
+          maxLength: 50
+        meta_description:
+          type: string
+          maxLength: 150
+        is_on_sale:
+          type: string
+          readOnly: true
+        discount_percentage:
+          type: string
+          readOnly: true
+        stock_status:
+          type: string
+          readOnly: true
+        related_products:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - brand
+      - category
+      - category_breadcrumbs
+      - created_at
+      - description
+      - discount_percentage
+      - id
+      - is_on_sale
+      - low_stock_threshold
+      - meta_title
+      - name
+      - price
+      - related_products
+      - short_description
+      - sku
+      - slug
+      - stock_quantity
+      - stock_status
+      - updated_at
+    ProductList:
+      type: object
+      description: |-
+        Serializer for Product list view - optimized for performance
+
+        Used for: GET /api/v1/products/
+        Purpose: Fast loading of product listings with essential info
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Product Name
+          description: e.g., iPhone 15 Pro Max
+          maxLength: 50
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        short_description:
+          type: string
+          description: Brief summary for listings
+          maxLength: 150
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        discount_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+          maxLength: 20
+        sku:
+          type: string
+          maxLength: 50
+        brand:
+          type: string
+          maxLength: 50
+        category_name:
+          type: string
+          readOnly: true
+        category_slug:
+          type: string
+          readOnly: true
+        is_on_sale:
+          type: string
+          readOnly: true
+        discount_percentage:
+          type: string
+          readOnly: true
+        stock_status:
+          type: string
+          readOnly: true
+        availability_status:
+          $ref: '#/components/schemas/AvailabilityStatusEnum'
+        main_image:
+          type: string
+          format: uri
+          nullable: true
+        is_featured:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - brand
+      - category_name
+      - category_slug
+      - created_at
+      - discount_percentage
+      - id
+      - is_on_sale
+      - name
+      - price
+      - short_description
+      - sku
+      - slug
+      - stock_status
+    SocialLogin:
+      type: object
+      properties:
+        access_token:
+          type: string
+        code:
+          type: string
+        id_token:
+          type: string
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

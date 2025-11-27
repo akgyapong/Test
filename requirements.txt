@@ -10,6 +10,7 @@ python-dotenv==1.0.0 # Load environment variables from .env
 djangorestframework==3.14.0 # REST API framework
 djangorestframework-simplejwt==5.3.0 # JWT authentication
 django-cors-headers==4.3.1 # CORS handling
+django-filter==24.3 # Advanced filtering for APIs
 
 # Phone number validation
 # phonenumbers==8.13.25 # Temporarily disabled

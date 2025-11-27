@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
+    'django_filters',  # Advanced API filtering
     
     # Local apps
     'api',
@@ -235,8 +236,12 @@ JWT_AUTH_HTTPONLY = False
 # =============================================================================
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:3000",     # React (Create React App)
     "http://127.0.0.1:3000",
+    "http://localhost:5173",     # Vite (your frontend)
+    "http://127.0.0.1:5173",
+    "http://localhost:4200",     # Angular
+    "http://localhost:8080",     # Vue.js
 ]
 
 CORS_ALLOW_CREDENTIALS = True
