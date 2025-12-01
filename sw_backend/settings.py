@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
+import dj_database_url
 
 # Load environment variables from .env files
 load_dotenv()
@@ -26,8 +27,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Secret configuration
 SECRET_KEY = os.environ.get("SECRET_KEY")
-DEBUG = bool(os.environ.get("DEBUG", default=0))
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
+
+# Environment detection
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'development').lower()
 
 
 # Application definition
@@ -42,6 +44,8 @@ INSTALLED_APPS = [
 
     
     # Third-party apps
+    'cloudinary_storage',
+    'cloudinary',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -68,6 +72,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -108,26 +113,16 @@ SITE_ID = 1
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Database configuration for Docker
+# Database configuration - works with both local PostgreSQL and hosted DATABASE_URL
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'shopwice_db'),
-        'USER': os.environ.get('POSTGRES_USER', 'shopwice_user'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'shopwice_password'),
-        'HOST' : os.environ.get('POSTGRES_HOST', 'db'),
-        'PORT' : os.environ.get('POSTGRES_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default=f"postgresql://{os.environ.get('POSTGRES_USER', 'shopwice_user')}:"
+                f"{os.environ.get('POSTGRES_PASSWORD', 'shopwice_password')}@"
+                f"{os.environ.get('POSTGRES_HOST', 'db')}:"
+                f"{os.environ.get('POSTGRES_PORT', '5432')}/"
+                f"{os.environ.get('POSTGRES_DB', 'shopwice_db')}"
+    )
 }
-
-# Fallback to SQLite for local development without Docker
-if os.environ.get('USE_SQLITE'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
 
 
 # Email Configuration
@@ -140,6 +135,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 
 # Static and Media Files
 STATIC_URL = os.environ.get('STATIC_URL', '/static/')
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Always set for collectstatic
 MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
 MEDIA_ROOT = BASE_DIR / 'media'
    
@@ -231,18 +227,7 @@ JWT_AUTH_COOKIE ='shopwice-auth'
 JWT_AUTH_REFRESH_COOKIE = 'shopwice-refresh'
 JWT_AUTH_HTTPONLY = False
 
-# =============================================================================
 # CORS CONFIGURATION
-# =============================================================================
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",     # React (Create React App)
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",     # Vite (your frontend)
-    "http://127.0.0.1:5173",
-    "http://localhost:4200",     # Angular
-    "http://localhost:8080",     # Vue.js
-]
 
 CORS_ALLOW_CREDENTIALS = True
 # Django Allauth Configuration
@@ -281,3 +266,115 @@ SOCIALACCOUNT_PROVIDERS = {
         'VERIFIED_EMAIL': False,
     }
 }
+
+# CLOUDINARY CONFIGURATION (for image upload)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'demo'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', 'demo'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'demo'),
+}
+
+# Use Cloudinary for media files (product images) in production
+# For local development, you can use local file storage
+if os.environ.get('USE_CLOUDINARY', '0') == '1':
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+else:
+    # Use default file storage for local development
+    pass
+
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'development').lower()
+
+# =============================================================================
+# ENVIRONMENT-BASED CONFIGURATION
+# =============================================================================
+
+if ENVIRONMENT == 'production':
+    # Production settings
+    DEBUG = False
+    ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    
+    # Security settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # Static files configuration for production
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    
+    # CORS for production (add your frontend domain)
+    CORS_ALLOWED_ORIGINS = [
+        # "https://your-frontend-domain.com",
+    ]
+    
+    # Logging configuration
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose'
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'django.security': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+        },
+    }
+    
+else:
+    # Development settings
+    DEBUG = True
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
+    
+    # CORS for development
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",     # React (Create React App)
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",     # Vite (your frontend)
+        "http://127.0.0.1:5173",
+        "http://localhost:4200",     # Angular
+        "http://localhost:8080",     # Vue.js
+    ]
+    
+    # Development logging (simpler)
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    }

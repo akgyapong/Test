@@ -1,5 +1,15 @@
 from django.db import models
-from cloudinary_storage.storage import MediaCloudinaryStorage
+import os
+
+# Conditional Cloudinary import
+try:
+    if os.environ.get('USE_CLOUDINARY', '0') == '1':
+        from cloudinary_storage.storage import MediaCloudinaryStorage
+        STORAGE_CLASS = MediaCloudinaryStorage()
+    else:
+        STORAGE_CLASS = None  # Use default Django storage
+except ImportError:
+    STORAGE_CLASS = None  # Fallback if Cloudinary not installed
 
 
 class Category(models.Model):
@@ -67,7 +77,15 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=True)
     availability_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="out_of_stock")
-    main_image = models.ImageField(upload_to='products/', storage=MediaCloudinaryStorage(), blank=True, null=True) # Save images at products/
+    
+    # Image field with conditional storage
+    main_image = models.ImageField(
+        upload_to='products/', 
+        storage=STORAGE_CLASS if STORAGE_CLASS else None, 
+        blank=True, 
+        null=True
+    )
+    
     meta_title = models.CharField(max_length=50)
     meta_description = models.CharField(max_length=150, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
