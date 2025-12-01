@@ -4,7 +4,7 @@ sqlparse==0.5.3
 tzdata==2025.2
 setuptools>=65.0.0  # Required for pkg_resources in Python 3.13+
 gunicorn==21.2.0 # Production WSGI server
-psycopg2-binary==2.9.9 # PostgreSQL adapter for production database
+psycopg[binary]==3.2.3  # PostgreSQL adapter with Python 3.13 support
 python-dotenv==1.0.0 # Load environment variables from .env 
 
 # API Development
